@@ -7,7 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from src import explore
+from src import explore, split
 from src.data import load_all
 
 
@@ -28,6 +28,14 @@ def main() -> None:
     print("Step 1: data characterization")
     stats = explore.run(ratings, movies, users, results_dir, figures_dir)
     print(json.dumps(stats, indent=2))
+
+    print("\nStep 2: global temporal train/validation/test split")
+    data_split = split.temporal_split(ratings)
+    s_stats = split.split_stats(ratings, data_split)
+    with open(results_dir / "split_stats.json", "w") as f:
+        json.dump(s_stats, f, indent=2)
+    split.plot_split(ratings, data_split, figures_dir / "temporal_split.png")
+    print(json.dumps(s_stats, indent=2))
 
     print(f"\nDone. Results in {results_dir}/, figures in {figures_dir}/")
 

@@ -111,6 +111,9 @@ def compute_stats(ratings: pd.DataFrame, movies: pd.DataFrame, users: pd.DataFra
             "users_active_on_single_day": int((active_days == 1).sum()),
             "users_active_on_single_day_frac": float((active_days == 1).mean()),
             "share_of_ratings_on_users_first_day": share_on_first_day,
+            # Ratings whose exact second is shared with at least one other rating by the same user.
+            "share_of_ratings_tied_with_another_by_same_user": float(
+                ratings.duplicated(["user_id", "timestamp"], keep=False).mean()),
         },
     }
 
