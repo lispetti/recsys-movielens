@@ -26,6 +26,8 @@ class Split:
     test: pd.DataFrame
     cut_train_val: int  # unix seconds; train = timestamp < cut_train_val
     cut_val_test: int   # val = cut_train_val <= timestamp < cut_val_test; test = the rest
+    train_frac: float   # the fractions the cuts were computed from, so exports report the real config
+    val_frac: float
 
 
 def temporal_split(ratings: pd.DataFrame, train_frac: float = TRAIN_FRAC,
@@ -41,6 +43,8 @@ def temporal_split(ratings: pd.DataFrame, train_frac: float = TRAIN_FRAC,
         test=ratings[t >= cut2],
         cut_train_val=cut1,
         cut_val_test=cut2,
+        train_frac=train_frac,
+        val_frac=val_frac,
     )
 
 
@@ -76,7 +80,8 @@ def _part_summary(df: pd.DataFrame) -> dict:
     }
 
 
-def shift_stats(history: pd.DataFrame, target: pd.DataFrame, eval_users: np.ndarray) -> dict:
+def shift_stats(history: pd.DataFrame, target: pd.DataFrame, eval_users: np.ndarray,
+                threshold: int = RELEVANT_THRESHOLD) -> dict:
     """How the evaluated users and their target ratings differ from the training data."""
     hist_per_user = history.groupby("user_id").size()
     hist_pop = history.groupby("item_id").size()
@@ -91,15 +96,15 @@ def shift_stats(history: pd.DataFrame, target: pd.DataFrame, eval_users: np.ndar
         "history_ratings_per_user_evaluated_users_median": float(hist_per_user.loc[eval_users].median()),
         "mean_rating_history": float(history["rating"].mean()),
         "mean_rating_target": float(tgt["rating"].mean()),
-        "share_relevant_history": float((history["rating"] >= RELEVANT_THRESHOLD).mean()),
-        "share_relevant_target": float((tgt["rating"] >= RELEVANT_THRESHOLD).mean()),
+        "share_relevant_history": float((history["rating"] >= threshold).mean()),
+        "share_relevant_target": float((tgt["rating"] >= threshold).mean()),
         "median_item_popularity_history_ratings": float(pop_of(history).median()),
         "median_item_popularity_target_ratings": float(pop_of(tgt).median()),
         "share_on_top10pct_items_history": float(history["item_id"].isin(top10_items).mean()),
         "share_on_top10pct_items_target": float(tgt["item_id"].isin(top10_items).mean()),
         "target_ratings_on_items_unseen_in_history": int((~tgt["item_id"].isin(hist_pop.index)).sum()),
         "target_relevant_on_items_unseen_in_history": int(
-            ((~tgt["item_id"].isin(hist_pop.index)) & (tgt["rating"] >= RELEVANT_THRESHOLD)).sum()),
+            ((~tgt["item_id"].isin(hist_pop.index)) & (tgt["rating"] >= threshold)).sum()),
         "target_ratings_per_evaluated_user_median": float(tgt.groupby("user_id").size().median()),
     }
 
@@ -123,13 +128,14 @@ def plot_split(ratings: pd.DataFrame, split: Split, out) -> None:
     ax.set_yscale("log")
     ax.set_ylabel("Ratings per week (log)")
     ax.legend(loc="upper right", fontsize=8)
-    ax.set_title("Global temporal split (80% / 10% / 10% of ratings)")
+    test_frac = 1 - split.train_frac - split.val_frac
+    ax.set_title(f"Global temporal split ({split.train_frac:.0%} / {split.val_frac:.0%} / {test_frac:.0%} of ratings)")
     fig.tight_layout()
     fig.savefig(out, dpi=150)
     plt.close(fig)
 
 
-def split_stats(ratings: pd.DataFrame, split: Split) -> dict:
+def split_stats(ratings: pd.DataFrame, split: Split, threshold: int = RELEVANT_THRESHOLD) -> dict:
     n = len(ratings)
     parts = {name: _part_summary(df) for name, df in
              [("train", split.train), ("val", split.val), ("test", split.test)]}
@@ -137,23 +143,23 @@ def split_stats(ratings: pd.DataFrame, split: Split) -> dict:
         parts[name]["share_of_all"] = len(df) / n
 
     train_val = pd.concat([split.train, split.val])
-    val_users, val_counts = evaluation_users(split.train, split.val)
-    test_users, test_counts = evaluation_users(train_val, split.test)
+    val_users, val_counts = evaluation_users(split.train, split.val, threshold)
+    test_users, test_counts = evaluation_users(train_val, split.test, threshold)
     return {
         "protocol": {
             "type": "global temporal split",
-            "train_frac": TRAIN_FRAC,
-            "val_frac": VAL_FRAC,
-            "test_frac": round(1 - TRAIN_FRAC - VAL_FRAC, 10),
+            "train_frac": split.train_frac,
+            "val_frac": split.val_frac,
+            "test_frac": round(1 - split.train_frac - split.val_frac, 10),
             "cut_train_val": str(pd.to_datetime(split.cut_train_val, unit="s", utc=True)),
             "cut_val_test": str(pd.to_datetime(split.cut_val_test, unit="s", utc=True)),
-            "relevant_threshold": RELEVANT_THRESHOLD,
+            "relevant_threshold": threshold,
             "tuning": "fit on train, evaluate on val",
             "final": "refit on train+val, evaluate on test",
         },
         "parts": parts,
         "validation_users": val_counts,
         "test_users": test_counts,
-        "shift_train_vs_val": shift_stats(split.train, split.val, val_users),
-        "shift_trainval_vs_test": shift_stats(train_val, split.test, test_users),
+        "shift_train_vs_val": shift_stats(split.train, split.val, val_users, threshold),
+        "shift_trainval_vs_test": shift_stats(train_val, split.test, test_users, threshold),
     }
