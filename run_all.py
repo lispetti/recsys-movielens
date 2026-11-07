@@ -7,8 +7,11 @@ import argparse
 import json
 from pathlib import Path
 
-from src import explore, split
+import pandas as pd
+
+from src import baselines, explore, split
 from src.data import load_all
+from src.results import write_results
 
 
 def main() -> None:
@@ -36,6 +39,11 @@ def main() -> None:
         json.dump(s_stats, f, indent=2)
     split.plot_split(ratings, data_split, figures_dir / "temporal_split.png")
     print(json.dumps(s_stats, indent=2))
+
+    print("\nStep 3: baselines")
+    result_rows = baselines.run_most_popular(movies, data_split, results_dir)
+    write_results(result_rows, results_dir / "results.csv")
+    print(pd.read_csv(results_dir / "results.csv").to_string(index=False))
 
     print(f"\nDone. Results in {results_dir}/, figures in {figures_dir}/")
 
