@@ -62,7 +62,7 @@ The dataset is not included in this repository (see GroupLens usage terms).
 
 ## Running
 
-To be added: a single command that reproduces every number and figure in the report, e.g.
+One command reproduces every number and figure (written to `results/` and `figures/`):
 
 ```bash
 python run_all.py --data-dir data/ml-1m
