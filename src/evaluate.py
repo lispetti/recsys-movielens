@@ -63,16 +63,18 @@ def evaluate(model: Recommender, history: pd.DataFrame, target: pd.DataFrame,
     per_user = pd.DataFrame(rows)
     recommended = set().union(*lists.values()) if lists else set()
     return {
-        "precision@10": float(per_user["precision"].mean()),
-        "recall@10": float(per_user["recall"].mean()),
-        "ndcg@10": float(per_user["ndcg"].mean()),
+        # Labels follow k, so a non-default cutoff can never be reported as a top-10 result.
+        f"precision@{k}": float(per_user["precision"].mean()),
+        f"recall@{k}": float(per_user["recall"].mean()),
+        f"ndcg@{k}": float(per_user["ndcg"].mean()),
         "catalogue_coverage": len(recommended) / len(catalogue),
         "evaluated_users": int(len(eval_users)),
     }, lists
 
 
 def check_against_sklearn(lists: dict, target: pd.DataFrame, catalogue: np.ndarray,
-                          n_users: int = 200, k: int = K, seed: int = 0) -> dict:
+                          n_users: int = 200, k: int = K, seed: int = 0,
+                          threshold: int = RELEVANT_THRESHOLD) -> dict:
     """Compare our NDCG@k with scikit-learn's ndcg_score on a sample of users.
 
     The spec asks teams that write their own metrics to show agreement with a reference.
@@ -80,7 +82,7 @@ def check_against_sklearn(lists: dict, target: pd.DataFrame, catalogue: np.ndarr
     """
     from sklearn.metrics import ndcg_score
 
-    relevant = relevant_items(target)
+    relevant = relevant_items(target, threshold)
     rng = np.random.default_rng(seed)
     users = rng.choice(np.array(list(lists)), size=min(n_users, len(lists)), replace=False)
     pos = {item: i for i, item in enumerate(catalogue)}
@@ -94,4 +96,5 @@ def check_against_sklearn(lists: dict, target: pd.DataFrame, catalogue: np.ndarr
         ours = user_metrics(lists[u], relevant[u], k)["ndcg"]
         ref = ndcg_score(y_true[None, :], y_score[None, :], k=k)
         max_diff = max(max_diff, abs(ours - ref))
-    return {"users_checked": int(len(users)), "max_abs_difference_ndcg": max_diff, "seed": seed}
+    return {"users_checked": int(len(users)), "k": k, "threshold": threshold,
+            "max_abs_difference_ndcg": max_diff, "seed": seed}
