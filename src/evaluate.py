@@ -51,10 +51,15 @@ def user_metrics(recs: list, relevant: set, k: int = K) -> dict:
 
 def evaluate(model: Recommender, history: pd.DataFrame, target: pd.DataFrame,
              eval_users: np.ndarray, catalogue: np.ndarray, k: int = K,
-             threshold: int = RELEVANT_THRESHOLD) -> tuple[dict, dict]:
-    """Return (averaged metrics, {user_id: top-k list})."""
-    relevant = relevant_items(target, threshold)
-    seen = seen_items(history)
+             threshold: int = RELEVANT_THRESHOLD, relevant: dict | None = None,
+             seen: dict | None = None) -> tuple[dict, dict]:
+    """Return (averaged metrics, {user_id: top-k list}).
+
+    `relevant` / `seen` can be passed in (from relevant_items / seen_items on the same data)
+    to avoid recomputing them when many models are evaluated on the same split.
+    """
+    relevant = relevant_items(target, threshold) if relevant is None else relevant
+    seen = seen_items(history) if seen is None else seen
     lists, rows = {}, []
     for u in eval_users:
         recs = model.recommend(u, seen.get(u, set()), k)

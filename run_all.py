@@ -41,7 +41,10 @@ def main() -> None:
     print(json.dumps(s_stats, indent=2))
 
     print("\nStep 3: baselines")
+    print("  Most Popular")
     result_rows = baselines.run_most_popular(movies, data_split, results_dir)
+    print("  Item-based kNN (validation grid, then test)")
+    result_rows += baselines.run_item_knn(movies, data_split, results_dir, figures_dir)
     write_results(result_rows, results_dir / "results.csv")
     print(pd.read_csv(results_dir / "results.csv").to_string(index=False))
 
