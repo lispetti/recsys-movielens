@@ -2,7 +2,7 @@
 
 Team project for the Recommender Systems course (Tampere University).
 
-> Work in progress. Part 1 (data, protocol, baselines) is being built.
+> Work in progress: Parts 1 and 2.
 
 ## Requirements
 
@@ -67,3 +67,7 @@ One command reproduces every number and figure (written to `results/` and `figur
 ```bash
 python run_all.py --data-dir data/ml-1m
 ```
+
+The run takes about 30 minutes on a laptop CPU, most of it Mult-VAE training.
+
+`results/results.csv` holds the rows of every results-template tab; its `Sheet` column names the tab.
