@@ -71,3 +71,7 @@ python run_all.py --data-dir data/ml-1m
 The run takes about 30 minutes on a laptop CPU, most of it Mult-VAE training.
 
 `results/results.csv` holds the rows of every results-template tab; its `Sheet` column names the tab.
+
+The self-implemented algorithm is the Markov-chain sequential recommender in `src/markov.py`
+(Lecture 4.1, slides 6-7). Its unit test, which checks it against the lecture's worked example and a
+literal implementation of the formula, runs with `python -m tests.check_markov`.

@@ -24,6 +24,7 @@ from scipy import stats
 
 from src import evaluate as ev
 from src.item_knn import ItemKNN
+from src.markov import MarkovChain
 from src.mult_vae import MultVAE
 from src.popularity import MostPopular
 from src.results import METRIC_COLUMNS, metric_columns
@@ -44,8 +45,8 @@ class Model:
     self_implemented: bool = False
 
 
-def selected_models(results_dir: Path, vae_config: dict) -> list[Model]:
-    """The validation-selected variant of each Part 1 baseline, and Mult-VAE."""
+def selected_models(results_dir: Path, vae_config: dict, markov_config: dict) -> list[Model]:
+    """The validation-selected variant of each Part 1 baseline, Mult-VAE and the Markov chain."""
     pop = pd.read_csv(results_dir / "most_popular_validation.csv")
     pop = pop.loc[pop["ndcg@10"].idxmax()]
     window = None if pd.isna(pop["window_days"]) else int(pop["window_days"])
@@ -58,6 +59,8 @@ def selected_models(results_dir: Path, vae_config: dict) -> list[Model]:
               lambda seed: ItemKNN(knn["similarity"], int(knn["k"]), int(knn["shrinkage"])), [None]),
         Model("Mult-VAE (RecPack)", "Neural",
               lambda seed: MultVAE(**vae_config, seed=seed), SEEDS),
+        Model("Markov chain (self-implemented)", "Sequential",
+              lambda seed: MarkovChain(**markov_config), [None], self_implemented=True),
     ]
 
 

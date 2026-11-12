@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src import baselines, explore, mult_vae, part2, split
+from src import baselines, explore, markov, mult_vae, part2, split
 from src.data import load_all
 from src.results import SHEET_COLUMNS, write_results
 
@@ -49,8 +49,11 @@ def main() -> None:
     print("\nStep 4: Mult-VAE (validation grid)")
     vae_config = mult_vae.tune(movies, data_split, results_dir)
 
-    print("\nStep 5: Part 2 comparison on test (seeds, disaggregation, sparsity ablation)")
-    models = part2.selected_models(results_dir, vae_config)
+    print("\nStep 5: Markov chain (self-implemented, validation grid)")
+    markov_config = markov.tune(movies, data_split, results_dir, figures_dir)
+
+    print("\nStep 6: Part 2 comparison on test (seeds, disaggregation, sparsity ablation)")
+    models = part2.selected_models(results_dir, vae_config, markov_config)
     result_rows += part2.run(models, movies, data_split)
     write_results(result_rows, results_dir / "results.csv")
     results = pd.read_csv(results_dir / "results.csv", keep_default_na=False)

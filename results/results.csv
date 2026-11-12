@@ -32,3 +32,11 @@ Part 2 - Disaggregated,Mult-VAE (RecPack),,,,0.143023,0.074978,0.163787,0.184994
 Part 2 - Disaggregated,Mult-VAE (RecPack),,,,0.155204,0.062032,0.169798,0.179243,,mean over 3 seeds,,,,,"0, 1, 2",Test period,late,test ratings from 2001-06-20 21:55 UTC on,
 Part 2 - Sparsity,Mult-VAE (RecPack),,,,0.217975,0.072295,0.239023,0.174951,,"train+val ratings subsampled uniformly at random (random_state=0); hyperparameters, test users and excluded items as at 100%",,,,,"0, 1, 2",,,,50.0
 Part 2 - Sparsity,Mult-VAE (RecPack),,,,0.208513,0.063879,0.231012,0.115632,,"train+val ratings subsampled uniformly at random (random_state=0); hyperparameters, test users and excluded items as at 100%",,,,,"0, 1, 2",,,,20.0
+Part 2 - Sparsity,Markov chain (self-implemented),,,,0.130198,0.041556,0.140261,0.201906,,full train+val,,,,,none (deterministic),,,,100.0
+Part 2 - Models,Markov chain (self-implemented),,,,0.130198,0.041556,0.140261,0.201906,,"hyperparameters selected on validation by NDCG@10, refit on train+val",Sequential,Yes,"last 50 items, decay 1, shrinkage beta=500","deterministic: one run, no seed variance",none (deterministic),,,,
+Part 2 - Disaggregated,Markov chain (self-implemented),,,,0.15,0.050081,0.160921,0.130827,,,,,,,none (deterministic),User activity,low,<= 150 train+val ratings (median of test users),
+Part 2 - Disaggregated,Markov chain (self-implemented),,,,0.110087,0.032897,0.119277,0.190574,,,,,,,none (deterministic),User activity,high,> 150 train+val ratings,
+Part 2 - Disaggregated,Markov chain (self-implemented),,,,0.088103,0.045793,0.098224,0.192635,,,,,,,none (deterministic),Test period,early,test ratings before 2001-06-20 21:55 UTC (median test timestamp),
+Part 2 - Disaggregated,Markov chain (self-implemented),,,,0.09153,0.033581,0.099782,0.184651,,,,,,,none (deterministic),Test period,late,test ratings from 2001-06-20 21:55 UTC on,
+Part 2 - Sparsity,Markov chain (self-implemented),,,,0.140035,0.045447,0.15309,0.183363,,"train+val ratings subsampled uniformly at random (random_state=0); hyperparameters, test users and excluded items as at 100%",,,,,none (deterministic),,,,50.0
+Part 2 - Sparsity,Markov chain (self-implemented),,,,0.134254,0.038559,0.144198,0.185939,,"train+val ratings subsampled uniformly at random (random_state=0); hyperparameters, test users and excluded items as at 100%",,,,,none (deterministic),,,,20.0
