@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from src import baselines, explore, split
+from src import baselines, explore, mult_vae, part2, split
 from src.data import load_all
-from src.results import write_results
+from src.results import SHEET_COLUMNS, write_results
 
 
 def main() -> None:
@@ -45,8 +45,17 @@ def main() -> None:
     result_rows = baselines.run_most_popular(movies, data_split, results_dir)
     print("  Item-based kNN (validation grid, then test)")
     result_rows += baselines.run_item_knn(movies, data_split, results_dir, figures_dir)
+
+    print("\nStep 4: Mult-VAE (validation grid)")
+    vae_config = mult_vae.tune(movies, data_split, results_dir)
+
+    print("\nStep 5: Part 2 comparison on test (seeds, disaggregation, sparsity ablation)")
+    models = part2.selected_models(results_dir, vae_config)
+    result_rows += part2.run(models, movies, data_split)
     write_results(result_rows, results_dir / "results.csv")
-    print(pd.read_csv(results_dir / "results.csv").to_string(index=False))
+    results = pd.read_csv(results_dir / "results.csv", keep_default_na=False)
+    for sheet, columns in SHEET_COLUMNS.items():
+        print(f"\n{sheet}\n" + results.loc[results["Sheet"] == sheet, columns].to_string(index=False))
 
     print(f"\nDone. Results in {results_dir}/, figures in {figures_dir}/")
 

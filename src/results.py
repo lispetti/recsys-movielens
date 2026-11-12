@@ -1,15 +1,30 @@
 """Writing results.csv in the course results-template format.
 
-Column names match the "Part 1 - Baselines" tab of the results template exactly. The extra
-leading "Sheet" column says which template tab a row belongs to (the template allows adding
-columns), so later parts can append rows for their own tabs.
+One file holds the rows of every template tab. The leading "Sheet" column says which tab a row
+belongs to (the template allows adding columns); the other columns are the tabs' columns, named
+exactly as in the template. A column that a row's tab does not have is left empty, so filtering
+on "Sheet" gives each tab's table with the template's columns.
 """
 from pathlib import Path
 
 import pandas as pd
 
-PART1_COLUMNS = ["Model", "Variant / settings", "Similarity", "k", "Precision@10", "Recall@10",
-                 "NDCG@10", "Catalogue coverage", "Seed", "Notes"]
+METRIC_COLUMNS = {"precision@10": "Precision@10", "recall@10": "Recall@10", "ndcg@10": "NDCG@10",
+                  "catalogue_coverage": "Catalogue coverage"}
+_METRICS = list(METRIC_COLUMNS.values())
+
+SHEET_COLUMNS = {
+    "Part 1 - Baselines": ["Model", "Variant / settings", "Similarity", "k", *_METRICS, "Seed", "Notes"],
+    "Part 2 - Models": ["Model", "Paradigm", "Self-implemented?", "Key hyperparameters", *_METRICS,
+                        "Variability / CI / test", "Seed(s)", "Notes"],
+    "Part 2 - Disaggregated": ["Model", "Breakdown dimension", "Group", "Definition / threshold",
+                               *_METRICS, "Seed(s)", "Notes"],
+    "Part 2 - Sparsity": ["Model", "Training interactions (%)", *_METRICS, "Seed(s)", "Notes"],
+}
+
+
+def metric_columns(metrics: dict) -> dict:
+    return {column: round(metrics[key], 6) for key, column in METRIC_COLUMNS.items()}
 
 
 def part1_row(model: str, variant: str, metrics: dict, similarity: str = "", k="",
@@ -20,15 +35,12 @@ def part1_row(model: str, variant: str, metrics: dict, similarity: str = "", k="
         "Variant / settings": variant,
         "Similarity": similarity,
         "k": k,
-        "Precision@10": round(metrics["precision@10"], 6),
-        "Recall@10": round(metrics["recall@10"], 6),
-        "NDCG@10": round(metrics["ndcg@10"], 6),
-        "Catalogue coverage": round(metrics["catalogue_coverage"], 6),
+        **metric_columns(metrics),
         "Seed": seed,
         "Notes": notes,
     }
 
 
 def write_results(rows: list[dict], path: Path) -> None:
-    df = pd.DataFrame(rows, columns=["Sheet"] + PART1_COLUMNS)
-    df.to_csv(path, index=False)
+    columns = list(dict.fromkeys(c for sheet in SHEET_COLUMNS.values() for c in sheet))
+    pd.DataFrame(rows, columns=["Sheet"] + columns).to_csv(path, index=False)
