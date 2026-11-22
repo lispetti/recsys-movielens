@@ -70,8 +70,19 @@ python run_all.py --data-dir data/ml-1m
 
 The run takes about 30 minutes on a laptop CPU, most of it Mult-VAE training.
 
+To leave Mult-VAE out (for a quick check, or on a machine without torch, such as an Intel Mac,
+for which torch 2.5.1 is not available), add `--skip-mult-vae`. `results/results.csv` then has
+no Mult-VAE rows, so the report's numbers always come from the full command above.
+
+```bash
+python run_all.py --data-dir data/ml-1m --skip-mult-vae
+```
+
 `results/results.csv` holds the rows of every results-template tab; its `Sheet` column names the tab.
 
 The self-implemented algorithm is the Markov-chain sequential recommender in `src/markov.py`
 (Lecture 4.1, slides 6-7). Its unit test, which checks it against the lecture's worked example and a
 literal implementation of the formula, runs with `python -m tests.check_markov`.
+
+Part 2 models: Mult-VAE (`src/mult_vae.py`, RecPack), the Markov chain (`src/markov.py`,
+self-implemented) and ALS matrix factorization (`src/als.py`, the `implicit` library).

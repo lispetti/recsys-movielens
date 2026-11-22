@@ -6,3 +6,5 @@ scikit-learn==1.5.2
 matplotlib==3.9.2
 torch==2.5.1
 recpack==0.3.6
+implicit==0.7.2
+threadpoolctl==3.8.0
