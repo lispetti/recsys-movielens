@@ -33,10 +33,11 @@ from src.split import RELEVANT_THRESHOLD, Split, evaluation_users
 
 ITERATIONS = 15
 
-# Search space (validation, fit on train): 3 x 3 x 3 x 2 = 54 configs, all with seed 0.
-FACTORS_GRID = [32, 64, 128]
+# Search space (validation, fit on train): 4 x 3 x 4 x 2 = 96 configs, all with seed 0.
+# 16 factors and alpha 0.3 were added because the first grid's best config sat at 32 and 1.
+FACTORS_GRID = [16, 32, 64, 128]
 REGULARIZATION_GRID = [0.01, 0.1, 1.0]
-ALPHA_GRID = [1.0, 10.0, 40.0]
+ALPHA_GRID = [0.3, 1.0, 10.0, 40.0]
 POSITIVE_ONLY_GRID = [False, True]  # input = every rating, or only ratings >= 4
 TUNING_SEED = 0
 
