@@ -1,7 +1,8 @@
 """Reproduce every number and figure in the report.
 
 Usage:
-    python run_all.py --data-dir data/ml-1m
+    python run_all.py --data-dir data/ml-1m                  # everything (the report's numbers)
+    python run_all.py --data-dir data/ml-1m --skip-mult-vae  # quick run without Mult-VAE
 """
 import argparse
 import json
@@ -9,7 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src import baselines, explore, markov, mult_vae, part2, split
+from src import als, baselines, explore, markov, part2, split
 from src.data import load_all
 from src.results import SHEET_COLUMNS, write_results
 
@@ -20,6 +21,9 @@ def main() -> None:
                         help="Folder containing ratings.dat, movies.dat, users.dat (default: data/ml-1m)")
     parser.add_argument("--out-dir", type=Path, default=Path("."),
                         help="Where results/ and figures/ are written (default: current folder)")
+    parser.add_argument("--skip-mult-vae", action="store_true",
+                        help="Leave out Mult-VAE (most of the run time; needs torch). "
+                             "results.csv then has no Mult-VAE rows.")
     args = parser.parse_args()
 
     results_dir = args.out_dir / "results"
@@ -46,14 +50,22 @@ def main() -> None:
     print("  Item-based kNN (validation grid, then test)")
     result_rows += baselines.run_item_knn(movies, data_split, results_dir, figures_dir)
 
-    print("\nStep 4: Mult-VAE (validation grid)")
-    vae_config = mult_vae.tune(movies, data_split, results_dir)
+    if args.skip_mult_vae:
+        print("\nStep 4: Mult-VAE skipped (--skip-mult-vae)")
+        vae_config = None
+    else:
+        print("\nStep 4: Mult-VAE (validation grid)")
+        from src import mult_vae  # imported here: needs torch, which --skip-mult-vae avoids
+        vae_config = mult_vae.tune(movies, data_split, results_dir)
 
     print("\nStep 5: Markov chain (self-implemented, validation grid)")
     markov_config = markov.tune(movies, data_split, results_dir, figures_dir)
 
-    print("\nStep 6: Part 2 comparison on test (seeds, disaggregation, sparsity ablation)")
-    models = part2.selected_models(results_dir, vae_config, markov_config)
+    print("\nStep 6: ALS matrix factorization (validation grid)")
+    als_config = als.tune(movies, data_split, results_dir)
+
+    print("\nStep 7: Part 2 comparison on test (seeds, disaggregation, sparsity ablation)")
+    models = part2.selected_models(results_dir, vae_config, markov_config, als_config)
     result_rows += part2.run(models, movies, data_split)
     write_results(result_rows, results_dir / "results.csv")
     results = pd.read_csv(results_dir / "results.csv", keep_default_na=False)
